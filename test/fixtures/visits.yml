@@ -1,0 +1,15 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  date: 2022-02-06
+  weight: 1.5
+  overnight_stay: false
+  total_charge: 1.5
+  pet: one
+
+two:
+  date: 2022-02-06
+  weight: 1.5
+  overnight_stay: false
+  total_charge: 1.5
+  pet: two
