@@ -1,6 +1,6 @@
 Spring 2022
 =
-67-272 miniPATS  v1
+67-272 miniPATS  v2
 =
 This is a basic Rails app that was built as a class demonstration in the spring of 2022.  This first version of the project is designed help students become more familiar with the basics of the Rails 5.2 framework; future versions will add the rest of the application components.
 
