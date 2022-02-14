@@ -33,7 +33,7 @@ gem 'jbuilder', '~> 2.5'
 
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
-
+gem 'validates_timeliness', '~> 3.0.8'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.1.0', require: false
 
@@ -41,6 +41,15 @@ group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   gem 'hirb'
+  gem 'faker', '1.8.7'
+  gem 'populator', '1.0.0'
+  gem 'factory_bot_rails', '4.8.2'
+  gem 'simplecov', '0.15.1'
+  gem 'shoulda'#, '3.5.0'
+  gem 'shoulda-matchers'#, '2.8.0'
+  gem 'minitest', '5.10.3'
+  gem 'minitest-rails', '3.0.0'
+  gem 'minitest-reporters', '1.1.19'
 end
 
 group :development do
@@ -50,7 +59,6 @@ group :development do
   # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
   gem 'spring'
   gem 'spring-watcher-listen', '~> 2.0.0'
-  gem 'faker'
 end
 
 group :test do

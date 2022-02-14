@@ -1,5 +1,17 @@
 class Owner < ApplicationRecord
   
+  # Callbacks
+  # -----------------------------
+  attr_accessor :destroyable # an extra attribute needed to handle the after_rollback actions
+  # create a callback that will strip non-digits before saving to db
+  before_save :reformat_phone
+  before_validation :valid_phone
+  
+  before_destroy :cannot_destroy_owner
+   # convert destroy call to make the owner, and all his related pets inactive in the system
+  # using the deactive_owner_user_and_pets private method
+  after_rollback :make_owner_and_pets_inactive
+
   # Relationships
   # -----------------------------
   has_many :pets # :dependent => :destroy  (:nullify option will break link, but leaves orphan records)
@@ -10,45 +22,18 @@ class Owner < ApplicationRecord
   # If a User has a Profile , then in the User class you'd have has_one :profile and 
   # in the Profile class you'd have belongs_to :user 
 
-# Scopes:
-# -----------------------------
-# As the chains of method calls grow longer, making the chains themselves
-# available for reuse becomes a concern. Once again, Rails helps us handle this part. 
-# # Owner.order('last_name, first_name').where(active: false).first
-# Scopes in an active record model (or subclass) are nothing but 
-# class level methods: they are executed on classes, never on an objects.
-# Why use scopes? 
-# Scoping allows you to specify commonly-used and custom queries 
-# (it can be considered as a shortcut for long or most frequently used queries) 
-# which can be referenced as method calls on the association objects or models.
-
-# Every scope takes two arguments:
-# A name, which you use to call this scope in your code
-# A lambda, which implements the query
-
-# `-> lambda`, this is a class method, it takes a block or a lambda,
-#  a nameless anonymous method and execute it (think of how things are done in functional programming)
-#  saying that the method points to another lambda (a stabbing lambda). 
-# To define a simple scope, we use the `scope` method inside the class,
-#  passing the query that we'd like to run when this scope is called:
-# ----------Examples-------------------
+  # Scopes
+  # -----------------------------
   # list owners in alphabetical order
   scope :alphabetical, -> { order('last_name, first_name') }
   # OR
   # scope :alphabetical, lambda {order('last_name, first_name')}
-
   # get all the owners who are active (not moved out and pet is alive)
   scope :active, -> { where(active: true) }
-
   #get all the owners who are inactive (have moved out or pet is dead)
   scope :inactive, -> { where.not(active: true) }
   # OR
   # scope :inactive, ->{where (active: false)}
-
-  # You may want to introduce a variable into a scope so you can make it more flexible.
-  # The question mark (?) is a placeholder, it'll be replaced by the value later. 
-  # This makes your code safer.
-
   # search all the owners in the system having a given first name
   # term (the search query) is the parameter for the anonymous method.
   scope :search, ->(term) { where('first_name LIKE ?', "#{term}%")}
@@ -56,32 +41,33 @@ class Owner < ApplicationRecord
   # search all the owners in the system by either first name or last name
   scope :search, ->(term) { where('first_name LIKE ? OR last_name LIKE ?', "#{term}%", "#{term}%") }
  
-  # we could do this
-  # a very unsafe alternative: SQL Injection
-  # scope :search, ->(term) { where("first_name LIKE #{term}% OR last_name LIKE #{term}%") }
+ # Misc Constants
+  # -----------------------------
+  # This is a local vet shop, but it is possible to have people coming from WV and OH as well
+  # Set up a states array to make select menu easier later
+  STATES_LIST = [['Ohio', 'OH'],['Pennsylvania', 'PA'],['West Virginia', 'WV']]
+  # Here is a complete states list if you want to expand the menu options...
+  # STATES_LIST = [['Alabama', 'AL'],['Alaska', 'AK'],['Arizona', 'AZ'],['Arkansas', 'AR'],['California', 'CA'],['Colorado', 'CO'],['Connectict', 'CT'],['Delaware', 'DE'],['District of Columbia ', 'DC'],['Florida', 'FL'],['Georgia', 'GA'],['Hawaii', 'HI'],['Idaho', 'ID'],['Illinois', 'IL'],['Indiana', 'IN'],['Iowa', 'IA'],['Kansas', 'KS'],['Kentucky', 'KY'],['Louisiana', 'LA'],['Maine', 'ME'],['Maryland', 'MD'],['Massachusetts', 'MA'],['Michigan', 'MI'],['Minnesota', 'MN'],['Mississippi', 'MS'],['Missouri', 'MO'],['Montana', 'MT'],['Nebraska', 'NE'],['Nevada', 'NV'],['New Hampshire', 'NH'],['New Jersey', 'NJ'],['New Mexico', 'NM'],['New York', 'NY'],['North Carolina','NC'],['North Dakota', 'ND'],['Ohio', 'OH'],['Oklahoma', 'OK'],['Oregon', 'OR'],['Pennsylvania', 'PA'],['Rhode Island', 'RI'],['South Carolina', 'SC'],['South Dakota', 'SD'],['Tennessee', 'TN'],['Texas', 'TX'],['Utah', 'UT'],['Vermont', 'VT'],['Virginia', 'VA'],['Washington', 'WA'],['West Virginia', 'WV'],['Wisconsin ', 'WI'],['Wyoming', 'WY']]
+  
+  # Validations
+  # -----------------------------
+  # make sure required fields are present
+  validates_presence_of :first_name, :last_name, :email, :phone
+  # if zip included, it must be 5 digits only
+  validates_format_of :zip, with: /\A\d{5}\z/, message: "should be five digits long"
+  # phone can have dashes, spaces, dots and parens, but must be 10 digits
+  validates_format_of :phone, with: /\A(\d{10}|\(?\d{3}\)?[-. ]\d{3}[-.]\d{4})\z/, message: "should be 10 digits (area code needed) and delimited with dashes only"
+  # email format (other regex for email exist; doesn't allow .museum, .aero, etc.)
+  # Not allowing for .uk, .ca, etc. because this is a Pittsburgh business and customers not likely to be out-of-country
+  validates_format_of :email, with: /\A[\w]([^@\s,;]+)@(([\w-]+\.)+(com|edu|org|net|gov|mil|biz|info))\z/i, message: "is not a valid format"
+  # if state is given, must be one of the choices given (no hacking this field)
+  # validates_inclusion_of :state, in: %w[PA OH WV], message: "is not an option", allow_blank: true
+ 
+  # if not limited to the three states, it might be better (but slightly slower) to write:
+  STATES_LIST = [['Alabama', 'AL'],['Alaska', 'AK'],['Arizona', 'AZ'],['Arkansas', 'AR'],['California', 'CA'],['Colorado', 'CO'],['Connectict', 'CT'],['Delaware', 'DE'],['District of Columbia ', 'DC'],['Florida', 'FL'],['Georgia', 'GA'],['Hawaii', 'HI'],['Idaho', 'ID'],['Illinois', 'IL'],['Indiana', 'IN'],['Iowa', 'IA'],['Kansas', 'KS'],['Kentucky', 'KY'],['Louisiana', 'LA'],['Maine', 'ME'],['Maryland', 'MD'],['Massachusetts', 'MA'],['Michigan', 'MI'],['Minnesota', 'MN'],['Mississippi', 'MS'],['Missouri', 'MO'],['Montana', 'MT'],['Nebraska', 'NE'],['Nevada', 'NV'],['New Hampshire', 'NH'],['New Jersey', 'NJ'],['New Mexico', 'NM'],['New York', 'NY'],['North Carolina','NC'],['North Dakota', 'ND'],['Ohio', 'OH'],['Oklahoma', 'OK'],['Oregon', 'OR'],['Pennsylvania', 'PA'],['Rhode Island', 'RI'],['South Carolina', 'SC'],['South Dakota', 'SD'],['Tennessee', 'TN'],['Texas', 'TX'],['Utah', 'UT'],['Vermont', 'VT'],['Virginia', 'VA'],['Washington', 'WA'],['West Virginia', 'WV'],['Wisconsin ', 'WI'],['Wyoming', 'WY']]
+  validates_inclusion_of :state, in: STATES_LIST.map {|key, value| value}, message: "is not an option", allow_blank: true
 
-  # ------- Scope vs Class Method
-  # Scopes aren't doing anything magical or super special. They're just methods.
-  # In fact, You could do the same thing using class methods!
-  # Like this:
-  
-  # class Owner
-    # def self.active2
-    #   where("active: true")    
-    # end
-  # end
 
-  # But there are design advantages to using scopes over class methods.
-  # Here is why:
-  # - Scopes result in cleaner code because of their syntax
-  # - Scopes are used for exactly one thing, so you know what you get the moment 
-  # you see one
-  # - Scopes aren't mixed with other methods, so they're easier to spot
-  
-  # In terms of functionality, the only difference is that scopes guarantee an
-  # ActiveRecord::Relation, and class methods don't. 
-  # This helps you avoid errors when your scope returns nothing.
-  
   # Other methods
   # -------------
   # a method to get one owner's (an object of type owner) name in last, first format
@@ -95,41 +81,47 @@ class Owner < ApplicationRecord
   end
 
   # a method to make an Owner inactive
-  # -----------------------------
   def make_inactive
     self.active=false
     self.save!
   end
 
+  # a method to make an Owner active
   def make_active
     self.active=true
     self.save!
   end
 
+  # Private methods for custom validations and callback handlers
+  # -----------------------------
+  private
+  # We need to strip non-digits before saving to db
+  def reformat_phone
+    phone = self.phone.to_s  # change to string in case input as all numbers 
+    phone.gsub!(/[^0-9]/,"") # strip all non-digits: it substitutes all digits with empty character
+    self.phone = phone       # reset self.phone to new string
+  end
 
-  # Misc Constants
-  # -----------------------------
-  # This is a local vet shop, but it is possible to have people coming from WV and OH as well
-  # Set up a states array to make select menu easier later
-  STATES_LIST = [['Ohio', 'OH'],['Pennsylvania', 'PA'],['West Virginia', 'WV']]
-  # Here is a complete states list if you want to expand the menu options...
-  # STATES_LIST = [['Alabama', 'AL'],['Alaska', 'AK'],['Arizona', 'AZ'],['Arkansas', 'AR'],['California', 'CA'],['Colorado', 'CO'],['Connectict', 'CT'],['Delaware', 'DE'],['District of Columbia ', 'DC'],['Florida', 'FL'],['Georgia', 'GA'],['Hawaii', 'HI'],['Idaho', 'ID'],['Illinois', 'IL'],['Indiana', 'IN'],['Iowa', 'IA'],['Kansas', 'KS'],['Kentucky', 'KY'],['Louisiana', 'LA'],['Maine', 'ME'],['Maryland', 'MD'],['Massachusetts', 'MA'],['Michigan', 'MI'],['Minnesota', 'MN'],['Mississippi', 'MS'],['Missouri', 'MO'],['Montana', 'MT'],['Nebraska', 'NE'],['Nevada', 'NV'],['New Hampshire', 'NH'],['New Jersey', 'NJ'],['New Mexico', 'NM'],['New York', 'NY'],['North Carolina','NC'],['North Dakota', 'ND'],['Ohio', 'OH'],['Oklahoma', 'OK'],['Oregon', 'OR'],['Pennsylvania', 'PA'],['Rhode Island', 'RI'],['South Carolina', 'SC'],['South Dakota', 'SD'],['Tennessee', 'TN'],['Texas', 'TX'],['Utah', 'UT'],['Vermont', 'VT'],['Virginia', 'VA'],['Washington', 'WA'],['West Virginia', 'WV'],['Wisconsin ', 'WI'],['Wyoming', 'WY']]
-  
-  
-  # Validations
-  # -----------------------------
-  # make sure required fields are present
-  validates_presence_of :first_name, :last_name, :email, :phone
-  # if zip included, it must be 5 digits only
-  validates_format_of :zip, with: /\A\d{5}\z/, message: "should be five digits long", allow_blank: true
-  # phone can have dashes, spaces, dots and parens, but must be 10 digits
-  validates_format_of :phone, with: /\A(\d{10}|\(?\d{3}\)?[-. ]\d{3}[-.]\d{4})\z/, message: "should be 10 digits (area code needed) and delimited with dashes only"
-  # email format (other regex for email exist; doesn't allow .museum, .aero, etc.)
-  # Not allowing for .uk, .ca, etc. because this is a Pittsburgh business and customers not likely to be out-of-country
-  validates_format_of :email, with: /\A[\w]([^@\s,;]+)@(([\w-]+\.)+(com|edu|org|net|gov|mil|biz|info))\z/i, message: "is not a valid format"
-  # if state is given, must be one of the choices given (no hacking this field)
-  validates_inclusion_of :state, in: %w[PA OH WV], message: "is not an option", allow_blank: true
-  # if not limited to the three states, it might be better (but slightly slower) to write:
-  # validates_inclusion_of :state, in: STATES_LIST.map {|key, value| value}, message: "is not an option", allow_blank: true
+  def valid_phone
+   phone = self.phone.to_s  # change to string in case input as all numbers 
+   phone.gsub!(/ /,"-") 
+   self.phone = phone
+  end
+      
+  # Callback handler to prevent owner deletions
+  def cannot_destroy_owner
+    self.destroyable=false
+    msg = "This owner cannot be deleted at this time. If this is a mistake, please alert the administrator."
+    errors.add(:base, msg)
+    throw(:abort) if errors.present?
+  end
+
+  # Callback handler to convert destroy call to make the owner, and all his related pets inactive in the system
+  def make_owner_and_pets_inactive
+    return true unless self.destroyable == false
+       self.pets.each{|pet| pet.make_inactive}
+       self.make_inactive
+       errors.add(:base, "#{self.proper_name} could not be deleted but was made inactive instead, along with related pets.")
+  end
 
 end
