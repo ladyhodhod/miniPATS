@@ -6,7 +6,7 @@ class Owner < ApplicationRecord
   # create a callback that will strip non-digits before saving to db
   before_save :reformat_phone
   before_validation :valid_phone
-  
+
   before_destroy :cannot_destroy_owner
    # convert destroy call to make the owner, and all his related pets inactive in the system
   # using the deactive_owner_user_and_pets private method
@@ -98,7 +98,7 @@ class Owner < ApplicationRecord
   # We need to strip non-digits before saving to db
   def reformat_phone
     phone = self.phone.to_s  # change to string in case input as all numbers 
-    phone.gsub!(/[^0-9]/,"") # strip all non-digits: it substitutes all digits with empty character
+    phone.gsub!(/[^0-9]/,"") # strip all non-digits: it substitutes all non digits with empty character
     self.phone = phone       # reset self.phone to new string
   end
 
