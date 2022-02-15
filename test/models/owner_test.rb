@@ -53,7 +53,7 @@ class OwnerTest < ActiveSupport::TestCase
   should allow_value("OH").for(:state)
   should_not allow_value("bad").for(:state)
   should_not allow_value(10).for(:state)
-  should_not allow_value("CA").for(:state)
+  should_not allow_value("xxx").for(:state)
   
   # ---------------------------------
   # Testing other methods with a context
@@ -84,59 +84,59 @@ class OwnerTest < ActiveSupport::TestCase
       assert_equal ["Alex", "Mark", "Rachel"], Owner.alphabetical.map{|o| o.first_name}
     end
     
-    # # test the scope 'active'
-    # should "shows that there are two active owners" do
-    #   assert_equal 2, Owner.active.size
-    #   # assert_equal ["Alex", "Mark"], Owner.active.alphabetical. map{|o| o.first_name}
-    #   assert_equal ["Alex", "Mark"], Owner.active.map{|o| o.first_name}.sort
-    # end
+    # test the scope 'active'
+    should "shows that there are two active owners" do
+      assert_equal 2, Owner.active.size
+      # assert_equal ["Alex", "Mark"], Owner.active.alphabetical. map{|o| o.first_name}
+      assert_equal ["Alex", "Mark"], Owner.active.map{|o| o.first_name}.sort
+    end
 
-    # # test the scope 'inactive'
-    # should "shows that there is one inactive owners" do
-    #   assert_equal 1, Owner.inactive.size
-    #   assert_equal ["Rachel"], Owner.inactive.map{|o| o.first_name}.sort
-    # end
+    # test the scope 'inactive'
+    should "shows that there is one inactive owners" do
+      assert_equal 1, Owner.inactive.size
+      assert_equal ["Rachel"], Owner.inactive.map{|o| o.first_name}.sort
+    end
     
-    # # test the scope 'search'
-    # should "shows that search for owner by either (part of) last or first name works" do
-    #   assert_equal 3, Owner.search("Hei").size
-    #   assert_equal 1, Owner.search("Mark").size
-    # end
+    # test the scope 'search'
+    should "shows that search for owner by either (part of) last or first name works" do
+      assert_equal 3, Owner.search("Hei").size
+      assert_equal 1, Owner.search("Mark").size
+    end
     
-    # # test the method 'name' works
-    # should "shows that name method works" do
-    #   assert_equal "Heimann, Alex", @alex.name
-    # end
+    # test the method 'name' works
+    should "shows that name method works" do
+      assert_equal "Heimann, Alex", @alex.name
+    end
     
-    # # test the method 'proper_name' works
-    # should "shows that proper_name method works" do
-    #   assert_equal "Alex Heimann", @alex.proper_name
-    # end
+    # test the method 'proper_name' works
+    should "shows that proper_name method works" do
+      assert_equal "Alex Heimann", @alex.proper_name
+    end
     
-    # # # test the callback is working 'reformat_phone'
-    # # should "shows that Mark's phone is stripped of non-digits" do
-    # #   assert_equal "4122688211", @mark.phone
-    # # end
+    # test the callback is working 'reformat_phone'
+    should "shows that Mark's phone is stripped of non-digits" do
+      assert_equal "4122688211", @mark.phone
+    end
     
-    # # should "never be destroyed" do
-    # #   deny @alex.destroy
-    # # end
+    should "Owner never be destroyed" do
+      deny @alex.destroy
+    end
     
-    # # should "deactive an owner (and pets) instead of being destroyed" do
-    # #   create_animals
-    # #   create_pets
-    # #   assert @alex.active
-    # #   assert @alex_user.active
-    # #   assert_equal @alex.pets.active.count, 1
-    # #   @alex.destroy
-    # #   @alex.reload
-    # #   @alex_user.reload
-    # #   deny @alex.active
-    # #   deny @alex_user.active
-    # #   assert_equal @alex.pets.active.count, 0
-    # #   destroy_pets
-    # #   destroy_animals
-    # # end
+    should "make an owner and her pets inactive instead of being destroyed" do
+      # create_animals
+      # create_pets
+      # assert @alex.active
+      # assert @alex_user.active
+      # assert_equal @alex.pets.active.count, 1
+      # @alex.destroy
+      # @alex.reload
+      # @alex_user.reload
+      # deny @alex.active
+      # deny @alex_user.active
+      # assert_equal @alex.pets.active.count, 0
+      # destroy_pets
+      # destroy_animals
+    end
     
     # # should "reactive user if owner is made active" do
     # #   deny @rachel.active
@@ -148,5 +148,24 @@ class OwnerTest < ActiveSupport::TestCase
     # #   assert @rachel_user.active
     # # end
     
+    # another way for testing the inclusion validation
+    should "validate the state is one of the 50 states" do
+      # the good are good...
+      valid_states = ["AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
+      valid_states.each do |state|
+        @alex.state = state
+        assert @alex.valid?
+      end
+      # ... and the bad are bad
+      invalid_states = ["ALK", "AP", "TE", "D", "50th", "xxxx", 3, 0.51]
+      invalid_states.each do |state|
+        @alex.state = state
+        puts @alex.valid?
+        deny @alex.valid?
+      end
+
+    end
+
+
   end
 end

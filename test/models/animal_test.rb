@@ -2,15 +2,28 @@ require 'test_helper'
 
 class AnimalTest < ActiveSupport::TestCase
   # Not much for testing Animal as it is a simple model
+
   # Relationship matchers...
   should have_many(:pets)
   
   # Validation matchers...
   should validate_presence_of(:name)
 
+  should validate_uniqueness_of(:name)
+
+  # Valid Format test
+  should allow_value("Cat").for(:name)
+  should allow_value("Dog").for(:name)
+  should allow_value("Bird").for(:name)
+
+  should_not allow_value("bird").for(:name)
+  should_not allow_value("a").for(:name)
+  should_not allow_value("1234").for(:name)
+
     context "Creating animals context" do
     # create the objects I want with factories
     setup do 
+      puts "setting up the context"
       create_animals
     end
     
@@ -38,5 +51,16 @@ class AnimalTest < ActiveSupport::TestCase
       # assert_equal ["Alex", "Mark"], Owner.active.alphabetical. map{|o| o.first_name}
       assert_equal ["Turtle"], Animal.inactive.map{|a| a.name}.sort
     end
+
+    should "make sure animals cannot be destroyed" do
+      deny @cat.destroy
+      deny @rabbit.destroy
+    end
+
+    should "allow an existing animal to be edited" do
+      @cat.active = false
+      assert @cat.valid?
+    end
+
   end
 end

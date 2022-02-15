@@ -2,7 +2,7 @@ class Owner < ApplicationRecord
   
   # Callbacks
   # -----------------------------
-  attr_accessor :destroyable # an extra attribute needed to handle the after_rollback actions
+  # attr_accessor :destroyable # an extra attribute needed to handle the after_rollback actions
   # create a callback that will strip non-digits before saving to db
   before_save :reformat_phone
   before_validation :valid_phone
@@ -10,7 +10,7 @@ class Owner < ApplicationRecord
   before_destroy :cannot_destroy_owner
    # convert destroy call to make the owner, and all his related pets inactive in the system
   # using the deactive_owner_user_and_pets private method
-  after_rollback :make_owner_and_pets_inactive
+  after_rollback :make_owner_and_pets_inactive, on: [:destroy]
 
   # Relationships
   # -----------------------------
@@ -45,7 +45,7 @@ class Owner < ApplicationRecord
   # -----------------------------
   # This is a local vet shop, but it is possible to have people coming from WV and OH as well
   # Set up a states array to make select menu easier later
-  STATES_LIST = [['Ohio', 'OH'],['Pennsylvania', 'PA'],['West Virginia', 'WV']]
+  # STATES_LIST = [['Ohio', 'OH'],['Pennsylvania', 'PA'],['West Virginia', 'WV']]
   # Here is a complete states list if you want to expand the menu options...
   # STATES_LIST = [['Alabama', 'AL'],['Alaska', 'AK'],['Arizona', 'AZ'],['Arkansas', 'AR'],['California', 'CA'],['Colorado', 'CO'],['Connectict', 'CT'],['Delaware', 'DE'],['District of Columbia ', 'DC'],['Florida', 'FL'],['Georgia', 'GA'],['Hawaii', 'HI'],['Idaho', 'ID'],['Illinois', 'IL'],['Indiana', 'IN'],['Iowa', 'IA'],['Kansas', 'KS'],['Kentucky', 'KY'],['Louisiana', 'LA'],['Maine', 'ME'],['Maryland', 'MD'],['Massachusetts', 'MA'],['Michigan', 'MI'],['Minnesota', 'MN'],['Mississippi', 'MS'],['Missouri', 'MO'],['Montana', 'MT'],['Nebraska', 'NE'],['Nevada', 'NV'],['New Hampshire', 'NH'],['New Jersey', 'NJ'],['New Mexico', 'NM'],['New York', 'NY'],['North Carolina','NC'],['North Dakota', 'ND'],['Ohio', 'OH'],['Oklahoma', 'OK'],['Oregon', 'OR'],['Pennsylvania', 'PA'],['Rhode Island', 'RI'],['South Carolina', 'SC'],['South Dakota', 'SD'],['Tennessee', 'TN'],['Texas', 'TX'],['Utah', 'UT'],['Vermont', 'VT'],['Virginia', 'VA'],['Washington', 'WA'],['West Virginia', 'WV'],['Wisconsin ', 'WI'],['Wyoming', 'WY']]
   
@@ -110,7 +110,6 @@ class Owner < ApplicationRecord
       
   # Callback handler to prevent owner deletions
   def cannot_destroy_owner
-    self.destroyable=false
     msg = "This owner cannot be deleted at this time. If this is a mistake, please alert the administrator."
     errors.add(:base, msg)
     throw(:abort) if errors.present?
@@ -118,7 +117,6 @@ class Owner < ApplicationRecord
 
   # Callback handler to convert destroy call to make the owner, and all his related pets inactive in the system
   def make_owner_and_pets_inactive
-    return true unless self.destroyable == false
        self.pets.each{|pet| pet.make_inactive}
        self.make_inactive
        errors.add(:base, "#{self.proper_name} could not be deleted but was made inactive instead, along with related pets.")

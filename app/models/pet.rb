@@ -2,9 +2,8 @@ class Pet < ApplicationRecord
 
   # Callbacks
   # -----------------------------
-  attr_accessor :destroyable   # an extra attribute needed to handle the after_rollback actions
   before_destroy :cannot_destroy_pet
-  after_rollback :make_pet_inactive_instead_of_destroy
+  after_rollback :make_pet_inactive_instead_of_destroy, on: [:destroy]
 
   # Relationships
   # -----------------------------
@@ -108,7 +107,6 @@ class Pet < ApplicationRecord
   #  Callback methods
   # A callback handler to prevent the user from destroying the Pet object
   def cannot_destroy_pet
-    self.destroyable = false
     msg = "This pet cannot be deleted at this time. If this is a mistake, please alert the administrator."
     errors.add(:base, msg)
     throw(:abort) if errors.present?
@@ -116,7 +114,6 @@ class Pet < ApplicationRecord
 
   # A callback handler to  make the Pet object inactive instead
   def make_pet_inactive_instead_of_destroy
-    return true unless self.destroyable == false
     self.make_inactive
     msg = "This pet cannot be deleted but was made inactive instead."
     errors.add(:base, msg)

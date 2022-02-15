@@ -23,7 +23,7 @@ class Animal < ApplicationRecord
     validates_uniqueness_of :name, message:"Animal already in the records"
     
     # Make sure that all Animal names start witha  capital letter
-    validates_format_of :name, with: /\A\W/, message:"Name should start with Capital letter"
+    validates_format_of :name, with: /\A[A-Z]/, message:"Name should start with Capital letter"
 
     # Make sure the animal name contains more than 2 letters 
     validates :name, length:{ minimum: 2}
