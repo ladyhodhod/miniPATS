@@ -1,2 +1,0 @@
-class FakeModel < ApplicationRecord
-end

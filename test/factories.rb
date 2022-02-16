@@ -5,9 +5,7 @@
 # https://medium.com/@mariacristina.simoes/my-introduction-to-factory-bot-88949467a7e9
 
 FactoryBot.define do
-  factory :fake_model do
-    name "MyString"
-  end
+
 
   # a factory defines a blueprint of how to create objects of a certain model/classs
   factory :animal do
