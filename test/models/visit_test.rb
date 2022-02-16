@@ -69,5 +69,12 @@ class VisitTest < ActiveSupport::TestCase
       assert_equal 2, Visit.for_pet(@polo.id).last_x(2).size
       assert_equal 1, Visit.for_pet(@polo.id).last_x(1).size
     end
+
+    should "make sure visits cannot be destroyed" do
+      deny @visit1.destroy
+      deny @visit2.destroy
+    end
+
+
   end
 end

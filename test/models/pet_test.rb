@@ -18,7 +18,6 @@ class PetTest < ActiveSupport::TestCase
     setup do 
       create_animals
       create_owners
-      puts "petss created!"
       create_pets
       
     end
@@ -84,35 +83,43 @@ class PetTest < ActiveSupport::TestCase
       assert_equal "Female", @pork_chop.gender
       assert_equal "Male", @dusty.gender
     end
+
+    # test the make_active method
+    should "make Pet active" do 
+      pet=FactoryBot.build(:pet, name: "my pet", animal: @cat, active: false)
+      pet.make_active
+      assert pet.active
+    end 
     
     # test the custom validation 'animal_type_treated_by_PATS'
-    # should "identify a non-PATS animal type as invalid" do
-    #   # using 'build' instead of 'create' so not added to db; animal will not be in the system (only in memory)
-    #   @turtle = FactoryBot.build(:animal, name: "Turtle")
-    #   turtle_pet = FactoryBot.build(:pet, animal: @turtle, owner: @mark, name: "Surfer")
-    #   deny turtle_pet.valid?
-    #   # we've created plenty of valid pets earlier, so not testing the validation allows good cases here...
-    # end
+    should "identify a non-PATS animal type as invalid and a PATS animal as valid" do
+      # using 'build' instead of 'create' so not added to db; animal will not be in the system (only in memory)
+      @bear = FactoryBot.build(:animal, name: "Bear")
+      bear_pet = FactoryBot.build(:pet, animal: @bear, owner: @mark, name: "Teddy")
+      deny bear_pet.valid?
+      # we've created plenty of valid pets earlier, we can test them here
+      assert @dusty.valid?
+    end
     
     # test the custom validation 'owner_is_active_in_PATS_system'
-    # should "identify a non-active PATS owner as invalid" do
-    #   # remembering that Rachel is an inactive owner, let's build her pet in memory only (if we use
-    #   # 'FactoryBot.create' we will get a validation error and the test will stop prematurely.)
-    #   inactive_owner = FactoryBot.build(:pet, animal: @dog, owner: @rachel, name: "Daisy")
-    #   deny inactive_owner.valid?
-    #   # again we've created plenty of valid pets earlier, so only testing the bad cases here...
-    # end
+    should "identify a non-active PATS owner as invalid" do
+      # remembering that Rachel is an inactive owner, let's build her pet in memory only (if we use
+      # 'FactoryBot.create' we will get a validation error and the test will stop prematurely.)
+      inactive_owner = FactoryBot.build(:pet, animal: @dog, owner: @rachel, name: "Daisy")
+      deny inactive_owner.valid?
+      # again we've created plenty of valid pets earlier, so only testing the bad cases here...
+    end
     
-    # should "never be destroyed" do
-    #   deny @dusty.destroy
-    # end
+    should "never be destroyed" do
+      deny @dusty.destroy
+    end
     
-    # should "deactive a pet instead of being destroyed" do
-    #   assert @dusty.active
-    #   @dusty.destroy
-    #   @dusty.reload
-    #   deny @dusty.active
-    # end
+    should "deactive a pet instead of being destroyed" do
+      assert @dusty.active
+      @dusty.destroy
+      @dusty.reload
+      deny @dusty.active
+    end
     
     
   end

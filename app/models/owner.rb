@@ -10,7 +10,7 @@ class Owner < ApplicationRecord
   before_destroy :cannot_destroy_owner
    # convert destroy call to make the owner, and all his related pets inactive in the system
   # using the deactive_owner_user_and_pets private method
-  after_rollback :make_owner_and_pets_inactive, on: [:destroy]
+  after_rollback :make_owner_and_pets_inactive#, on: :destroy
 
   # Relationships
   # -----------------------------
@@ -30,6 +30,7 @@ class Owner < ApplicationRecord
   # scope :alphabetical, lambda {order('last_name, first_name')}
   # get all the owners who are active (not moved out and pet is alive)
   scope :active, -> { where(active: true) }
+
   #get all the owners who are inactive (have moved out or pet is dead)
   scope :inactive, -> { where.not(active: true) }
   # OR
@@ -110,6 +111,7 @@ class Owner < ApplicationRecord
       
   # Callback handler to prevent owner deletions
   def cannot_destroy_owner
+    @destroy_attempted=true
     msg = "This owner cannot be deleted at this time. If this is a mistake, please alert the administrator."
     errors.add(:base, msg)
     throw(:abort) if errors.present?
@@ -117,9 +119,11 @@ class Owner < ApplicationRecord
 
   # Callback handler to convert destroy call to make the owner, and all his related pets inactive in the system
   def make_owner_and_pets_inactive
+      if @destroy_attempted #@destroy_attempted== true
        self.pets.each{|pet| pet.make_inactive}
        self.make_inactive
        errors.add(:base, "#{self.proper_name} could not be deleted but was made inactive instead, along with related pets.")
+      end
   end
 
 end

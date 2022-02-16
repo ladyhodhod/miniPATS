@@ -118,35 +118,34 @@ class OwnerTest < ActiveSupport::TestCase
       assert_equal "4122688211", @mark.phone
     end
     
+       # test the make_active method
+       should "make Pet active" do 
+        owner=FactoryBot.build(:owner, first_name: "Houda", last_name: "Bouamor", active: false)
+        owner.make_active
+        assert owner.active
+      end 
+      
+
+    
     should "Owner never be destroyed" do
-      deny @alex.destroy
+      assert !@alex.destroy
+      # or
+      deny @alex.destroy #the deny method is defined in test_helper.rb
     end
     
     should "make an owner and her pets inactive instead of being destroyed" do
-      # create_animals
-      # create_pets
-      # assert @alex.active
-      # assert @alex_user.active
-      # assert_equal @alex.pets.active.count, 1
-      # @alex.destroy
-      # @alex.reload
-      # @alex_user.reload
-      # deny @alex.active
-      # deny @alex_user.active
-      # assert_equal @alex.pets.active.count, 0
-      # destroy_pets
-      # destroy_animals
+      create_animals
+      create_pets
+      assert @alex.active
+      assert_equal @alex.pets.active.count, 1
+      @alex.destroy
+      @alex.reload #Reloads the attributes of this object from the database.
+      deny @alex.active
+      assert_equal @alex.pets.active.count, 0
+      destroy_pets
+      destroy_animals
     end
     
-    # # should "reactive user if owner is made active" do
-    # #   deny @rachel.active
-    # #   deny @rachel_user.active
-    # #   @rachel.make_active
-    # #   @rachel.reload
-    # #   @rachel_user.reload
-    # #   assert @rachel.active
-    # #   assert @rachel_user.active
-    # # end
     
     # another way for testing the inclusion validation
     should "validate the state is one of the 50 states" do
@@ -160,7 +159,6 @@ class OwnerTest < ActiveSupport::TestCase
       invalid_states = ["ALK", "AP", "TE", "D", "50th", "xxxx", 3, 0.51]
       invalid_states.each do |state|
         @alex.state = state
-        puts @alex.valid?
         deny @alex.valid?
       end
 
