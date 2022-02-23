@@ -8,7 +8,7 @@
 module Contexts
 
   def create_animals
-    @cat    = FactoryBot.create(:animal)
+    @cat    = FactoryBot.create(:animal) #this creates an animal named Cat, and having active equal to true, as per factory
     @dog    = FactoryBot.create(:animal, name: 'Dog')
     @bird   = FactoryBot.create(:animal, name: 'Bird')
     @ferret = FactoryBot.create(:animal, name: 'Ferret')

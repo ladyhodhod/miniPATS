@@ -87,7 +87,7 @@ class OwnerTest < ActiveSupport::TestCase
     # test the scope 'active'
     should "shows that there are two active owners" do
       assert_equal 2, Owner.active.size
-      # assert_equal ["Alex", "Mark"], Owner.active.alphabetical. map{|o| o.first_name}
+      # assert_equal ["Alex", "Mark"], Owner.active.alphabetical.map{|o| o.first_name}
       assert_equal ["Alex", "Mark"], Owner.active.map{|o| o.first_name}.sort
     end
 
@@ -101,6 +101,7 @@ class OwnerTest < ActiveSupport::TestCase
     should "shows that search for owner by either (part of) last or first name works" do
       assert_equal 3, Owner.search("Hei").size
       assert_equal 1, Owner.search("Mark").size
+      assert_equal 1, Owner.search("Ra").size
     end
     
     # test the method 'name' works
@@ -119,7 +120,7 @@ class OwnerTest < ActiveSupport::TestCase
     end
     
        # test the make_active method
-       should "make Pet active" do 
+       should "make Owner active" do 
         owner=FactoryBot.build(:owner, first_name: "Houda", last_name: "Bouamor", active: false)
         owner.make_active
         assert owner.active
@@ -139,7 +140,7 @@ class OwnerTest < ActiveSupport::TestCase
       assert @alex.active
       assert_equal @alex.pets.active.count, 1
       @alex.destroy
-      @alex.reload #Reloads the attributes of this object from the database.
+      @alex.reload #Reloads the attributes of this object from the database with updated values
       deny @alex.active
       assert_equal @alex.pets.active.count, 0
       destroy_pets

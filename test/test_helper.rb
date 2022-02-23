@@ -9,7 +9,11 @@ require "rails/test_help"
 require "minitest"
 require 'minitest/rails'
 require 'minitest/reporters'
+
+
 require 'minitest_extensions' # makes the test messages a little bit more verbose
+
+
 require 'contexts'
 
 

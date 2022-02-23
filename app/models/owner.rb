@@ -37,7 +37,7 @@ class Owner < ApplicationRecord
   # scope :inactive, ->{where (active: false)}
   # search all the owners in the system having a given first name
   # term (the search query) is the parameter for the anonymous method.
-  scope :search, ->(term) { where('first_name LIKE ?', "#{term}%")}
+  # scope :search, ->(term) { where('first_name LIKE ?', "#{term}%")}
 
   # search all the owners in the system by either first name or last name
   scope :search, ->(term) { where('first_name LIKE ? OR last_name LIKE ?', "#{term}%", "#{term}%") }
